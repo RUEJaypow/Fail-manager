@@ -15,24 +15,22 @@ source_folder = config['Source']['source']
 destination_base = config['destination_base']['base']
 destination_folders = config['Path']
 
-# Ensure 'Path' section exists
 if not config.has_section('Path'):
     config.add_section('Path')
 
 for filename in os.listdir(source_folder):
     base, ext = os.path.splitext(filename)
-    ext = ext.lstrip('.').lower()  # Remove leading '.' from extension
+    ext = ext.lstrip('.').lower()  
 
-    # If extension folder does not exist, create it and update config
+    #create the destination folder if it does not have an ext
     if ext not in destination_folders:
         new_folder = os.path.join(destination_base, ext)
-        os.makedirs(new_folder, exist_ok=True)  # Create folder if it doesn't exist
+        os.makedirs(new_folder, exist_ok=True)  
         config['Path'][ext] = new_folder
-        with open(config_path, 'w') as configfile:
+        with open(config_path, 'w') as configfile:# add config file
             config.write(configfile)
         print(f"{ext} folder is created")
 
-    # Move file to the corresponding folder
     destination_folder = destination_folders.get(ext)
     if destination_folder:
         source_path = os.path.join(source_folder, filename)
