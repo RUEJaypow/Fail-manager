@@ -3,6 +3,7 @@ import shutil
 import errno
 import configparser
 import PySimpleGUI as sg
+from datetime import datetime
 
 def move_files(source_folder, destination_base, config_path='config.ini'):
     config = configparser.ConfigParser()
@@ -35,7 +36,10 @@ def move_files(source_folder, destination_base, config_path='config.ini'):
             destination_path = os.path.join(destination_folder, filename)
 
             try:
-                shutil.move(source_path, destination_path)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                new_file_name = f"{base}_{timestamp}{ext}"
+                new_destination_path = os.path.join(destination_path, new_file_name)
+                shutil.move(source_path, new_destination_path)
                 print(f"{ext} file transported")
             except FileNotFoundError:
                 os.makedirs(destination_folder, exist_ok=True)
@@ -48,24 +52,24 @@ def move_files(source_folder, destination_base, config_path='config.ini'):
 
 def main():
     config = configparser.ConfigParser()
-    sg.theme('DarkAmber')
+    sg.theme('Black')
     config_path = 'config.ini'
-    if 'Source' in config_path:
-        with open(config_path, 'r') :
-            source_path=config['Source']['source']
-            destination_path=config['destination_base']['base']
+    if os.path.exists(config_path):
+        config.read(config_path)
+        if 'Source' in config:
+            source_path=config['Source'].get('source','')
+            destination_path=config['destination_base'].get('base','')
+        else:
+            source_path=''
+            destination_path=''
+
         layout = [
         [sg.Text('ファイルを集めるフォルダパスを入力してください　　　'), sg.InputText(source_path)],
         [sg.Text('ファイルの移動先となるフォルダパスを入力してください'), sg.InputText(destination_path)],
         [sg.Button('OK'), sg.Button('終了')]
-    ]
-    layout = [
-        [sg.Text('ファイルを集めるフォルダパスを入力してください　　　'), sg.InputText()],
-        [sg.Text('ファイルの移動先となるフォルダパスを入力してください'), sg.InputText()],
-        [sg.Button('OK'), sg.Button('終了')]
-    ]
+        ]
 
-    window = sg.Window('sample', layout)
+        window = sg.Window('sample', layout)
 
     config_path = 'config.ini'
 
