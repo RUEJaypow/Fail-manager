@@ -26,6 +26,7 @@ def move_files(source_folder, destination_base, config_path='config.ini'):
             new_folder = os.path.join(destination_base, ext)
             os.makedirs(new_folder, exist_ok=True)
             config['Path'][ext] = new_folder
+
             with open(config_path, 'w') as configfile:
                 config.write(configfile)
             print(f"{ext} folder is created")
@@ -36,9 +37,12 @@ def move_files(source_folder, destination_base, config_path='config.ini'):
             destination_path = os.path.join(destination_folder, filename)
 
             try:
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                new_file_name = f"{base}_{timestamp}{ext}"
-                new_destination_path = os.path.join(destination_path, new_file_name)
+                if os.path.exists(destination_path):
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    new_file_name = f"{base}_{timestamp}.{ext}"
+                    new_destination_path = os.path.join(destination_folder, new_file_name)
+                else:
+                    new_destination_path = destination_path
                 shutil.move(source_path, new_destination_path)
                 print(f"{ext} file transported")
             except FileNotFoundError:
