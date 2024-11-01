@@ -5,6 +5,7 @@ import configparser
 import PySimpleGUI as sg
 from datetime import datetime
 
+
 def move_files(source_folder, destination_base, config_path='config.ini'):
     config = configparser.ConfigParser()
 
@@ -54,39 +55,49 @@ def move_files(source_folder, destination_base, config_path='config.ini'):
             except Exception as e:
                 print(f"Error: {e}")
 
+
 def main():
     config = configparser.ConfigParser()
     sg.theme('Black')
     config_path = 'config.ini'
+
+    # Load previous config if available
     if os.path.exists(config_path):
         config.read(config_path)
-        if 'Source' in config:
-            source_path=config['Source'].get('source','')
-            destination_path=config['destination_base'].get('base','')
-        else:
-            source_path=''
-            destination_path=''
+        source_path = config['Source'].get('source', '') if 'Source' in config else ''
+        destination_path = config['destination_base'].get('base', '') if 'destination_base' in config else ''
+    else:
+        source_path = ''
+        destination_path = ''
 
-        layout = [
-        [sg.Text('ファイルを集めるフォルダパスを入力してください　　　'), sg.InputText(source_path)],
-        [sg.Text('ファイルの移動先となるフォルダパスを入力してください'), sg.InputText(destination_path)],
-        [sg.Button('OK'), sg.Button('終了')]
-        ]
+    layout = [
+        [sg.Text('ファイルを集めるフォルダパスを入力してください　　　'), sg.InputText(source_path, key='-SOURCE-')],
+        [sg.Text('ファイルの移動先となるフォルダパスを入力してください'),
+         sg.InputText(destination_path, key='-DESTINATION-')],
+        [sg.Button('OK', bind_return_key=True), sg.Button('終了')]
+    ]
 
-        window = sg.Window('sample', layout)
-
-    config_path = 'config.ini'
+    window = sg.Window('File Manager', layout)
 
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED or event == '終了':
-            break
-        elif event == 'OK':
-            source_folder = values[0].replace('"', '')
-            destination_base = values[1].replace('"', '')
 
-            print('Source_folder:', source_folder)
-            print('destination_base:', destination_base)
+        if event in (sg.WIN_CLOSED, '終了'):
+            break
+
+        elif event == 'OK':
+            source_folder = values['-SOURCE-'].strip().replace('"', '')
+            destination_base = values['-DESTINATION-'].strip().replace('"', '')
+
+            if not source_folder or not destination_base:
+                sg.popup_ok('両方のパスを入力してください。')
+                continue
+            elif not os.path.exists(source_folder):
+                sg.popup_ok('ソースフォルダが存在しません。正しいパスを入力してください。')
+                continue
+            elif not os.path.exists(destination_base):
+                sg.popup_ok('移動先のフォルダが存在しません。正しいパスを入力してください。')
+                continue
 
             if os.path.exists(config_path):
                 config.read(config_path)
@@ -104,12 +115,15 @@ def main():
 
             try:
                 move_files(source_folder, destination_base, config_path)
+            except FileNotFoundError :
+                sg.popup_ok("ファイルが見つかりません: {}".format(FileNotFoundError))
+            except PermissionError :
+                sg.popup_ok("権限エラーが発生しました: {}".format(PermissionError))
             except Exception as e:
-                print("エラーが発生しました:", e)
-
-            break
+                sg.popup_ok("エラーが発生しました: {}".format(e))
 
     window.close()
+
 
 if __name__ == "__main__":
     main()
